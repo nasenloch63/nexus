@@ -4,11 +4,13 @@ import bcrypt from "bcryptjs";
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error("Please add your MongoDB URI to .env.local");
+  console.error("Error: MONGODB_URI environment variable is not set.");
+  console.log("Please add your MongoDB URI to .env.local or set it as an environment variable.");
+  process.exit(1);
 }
 
 async function seed() {
-  const client = new MongoClient(MONGODB_URI!);
+  const client = new MongoClient(MONGODB_URI);
 
   try {
     await client.connect();
