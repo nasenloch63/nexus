@@ -31,17 +31,21 @@ if (process.env.NODE_ENV === "development") {
 
 export default clientPromise;
 
-export async function getDatabase(): Promise<Db> {
+export async function getDb(): Promise<Db> {
   const client = await clientPromise;
   return client.db("nexussync");
 }
+
+// Alias for compatibility
+export const getDatabase = getDb;
 
 // Collection names
 export const COLLECTIONS = {
   USERS: "users",
   PROFILES: "profiles",
   MESSAGES: "messages",
-  AUTOMATIONS: "automations",
+  CHATS: "chats",
+  AUTOMATION_RULES: "automation_rules",
   ANALYTICS: "analytics",
   SESSIONS: "sessions",
 } as const;
