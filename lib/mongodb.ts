@@ -4,7 +4,15 @@ if (!process.env.MONGODB_URI) {
   throw new Error("Please add your MongoDB URI to .env.local");
 }
 
-const uri = process.env.MONGODB_URI;
+// Clean the URI - mongodb+srv URIs cannot have port numbers
+let uri = process.env.MONGODB_URI;
+
+// If using mongodb+srv, remove any port number that might be present
+if (uri.startsWith("mongodb+srv://")) {
+  // Remove port number pattern like :27017 from the host
+  uri = uri.replace(/:(\d+)(\/|\?|$)/, "$2");
+}
+
 const options = {};
 
 let client: MongoClient;
