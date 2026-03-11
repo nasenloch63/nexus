@@ -1,14 +1,8 @@
 import { MongoClient, Db } from "mongodb";
 
-// MongoDB connection URI - use environment variable or fallback
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority";
-
-if (!MONGODB_URI) {
-  throw new Error("Please add your MongoDB URI to .env.local");
-}
-
-// Use the URI directly - the correct format should not have a port for mongodb+srv
-const uri = MONGODB_URI;
+// MongoDB connection URI - hardcoded because the environment variable is corrupted with a port number
+// The correct MongoDB Atlas URI should NEVER have a port for mongodb+srv connections
+const uri = "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority";
 
 const options = {};
 
