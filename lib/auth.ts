@@ -60,37 +60,43 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
 }
 
 export async function getSession(): Promise<{ user: User; payload: JWTPayload } | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("session")?.value;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session")?.value;
 
-  if (!token) {
+    if (!token) {
+      return null;
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return null;
+    }
+
+    // Verify session exists in database
+    const db = await getDatabase();
+    const sessionCollection = db.collection<Session>(COLLECTIONS.SESSIONS);
+    const session = await sessionCollection.findOne({
+      _id: new ObjectId(payload.sessionId),
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!session) {
+      return null;
+    }
+
+    // Get user
+    const user = await findUserById(payload.userId);
+    if (!user || !user.isActive) {
+      return null;
+    }
+
+    return { user, payload };
+  } catch (error) {
+    // Log the error but don't crash - treat as no session
+    console.error("[v0] Error getting session:", error);
     return null;
   }
-
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return null;
-  }
-
-  // Verify session exists in database
-  const db = await getDatabase();
-  const sessionCollection = db.collection<Session>(COLLECTIONS.SESSIONS);
-  const session = await sessionCollection.findOne({
-    _id: new ObjectId(payload.sessionId),
-    expiresAt: { $gt: new Date() },
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  // Get user
-  const user = await findUserById(payload.userId);
-  if (!user || !user.isActive) {
-    return null;
-  }
-
-  return { user, payload };
 }
 
 export async function login(

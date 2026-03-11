@@ -4,30 +4,8 @@ if (!process.env.MONGODB_URI) {
   throw new Error("Please add your MongoDB URI to .env.local");
 }
 
-// Clean the URI - mongodb+srv URIs cannot have port numbers
-let uri = process.env.MONGODB_URI;
-
-// If using mongodb+srv, remove any port number that might be present
-if (uri.startsWith("mongodb+srv://")) {
-  try {
-    // Use URL API to properly parse and reconstruct the URI without port
-    const tempUri = uri.replace("mongodb+srv://", "https://");
-    const parsed = new URL(tempUri);
-    
-    // Reconstruct the URI without the port
-    const auth = parsed.username ? 
-      (parsed.password ? `${parsed.username}:${parsed.password}@` : `${parsed.username}@`) : 
-      "";
-    const path = parsed.pathname || "";
-    const search = parsed.search || "";
-    
-    uri = `mongodb+srv://${auth}${parsed.hostname}${path}${search}`;
-  } catch {
-    // If URL parsing fails, try simple regex as fallback
-    // This pattern removes :port from anywhere in the host portion
-    uri = uri.replace(/(mongodb\+srv:\/\/[^@]*@[^/:]+):\d+/, "$1");
-  }
-}
+// Use the URI directly - it should be in the correct format from MongoDB Atlas
+const uri = process.env.MONGODB_URI;
 
 const options = {};
 
