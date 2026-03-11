@@ -9,8 +9,24 @@ let uri = process.env.MONGODB_URI;
 
 // If using mongodb+srv, remove any port number that might be present
 if (uri.startsWith("mongodb+srv://")) {
-  // Remove port number pattern like :27017 from the host
-  uri = uri.replace(/:(\d+)(\/|\?|$)/, "$2");
+  try {
+    // Use URL API to properly parse and reconstruct the URI without port
+    const tempUri = uri.replace("mongodb+srv://", "https://");
+    const parsed = new URL(tempUri);
+    
+    // Reconstruct the URI without the port
+    const auth = parsed.username ? 
+      (parsed.password ? `${parsed.username}:${parsed.password}@` : `${parsed.username}@`) : 
+      "";
+    const path = parsed.pathname || "";
+    const search = parsed.search || "";
+    
+    uri = `mongodb+srv://${auth}${parsed.hostname}${path}${search}`;
+  } catch {
+    // If URL parsing fails, try simple regex as fallback
+    // This pattern removes :port from anywhere in the host portion
+    uri = uri.replace(/(mongodb\+srv:\/\/[^@]*@[^/:]+):\d+/, "$1");
+  }
 }
 
 const options = {};
