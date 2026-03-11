@@ -9,8 +9,11 @@ let uri = process.env.MONGODB_URI;
 
 // If using mongodb+srv, remove any port number that might be present
 if (uri.startsWith("mongodb+srv://")) {
-  // Remove port number pattern like :27017 from the host
-  uri = uri.replace(/:(\d+)(\/|\?|$)/, "$2");
+  // Parse the URI and remove port numbers
+  // Pattern matches host:port and replaces with just host
+  // Handles cases like: mongodb+srv://user:pass@host:27017/db or host:27017?options
+  uri = uri.replace(/(@[^:\/]+):(\d+)([\/?])/g, "$1$3");
+  uri = uri.replace(/(@[^:\/]+):(\d+)$/g, "$1");
 }
 
 const options = {};
