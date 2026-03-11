@@ -1,5 +1,5 @@
 // Profiles helper - returns static in-memory stats
-// MongoDB removed. TODO: Replace with real DB later.
+// MongoDB removed. No external dependencies. v3
 
 export interface ProfileStats {
   total: number;
