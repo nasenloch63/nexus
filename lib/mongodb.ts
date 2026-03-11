@@ -7,42 +7,37 @@ if (!process.env.MONGODB_URI) {
 // Clean the URI - mongodb+srv URIs cannot have port numbers
 let uri = process.env.MONGODB_URI;
 
-// Function to remove port from mongodb+srv URI
+// Function to remove port from mongodb+srv URI - handles all cases
 function cleanMongoSrvUri(inputUri: string): string {
   if (!inputUri.startsWith("mongodb+srv://")) {
     return inputUri;
   }
   
-  // Find the @ symbol that separates credentials from host
+  // Use a global regex to remove ALL port patterns (:followed by digits)
+  // that appear after @ and before / or ? or end of string
+  // This handles: host:27017, host:27017/, host:27017?, host:27017/db?options
+  
   const atIndex = inputUri.lastIndexOf("@");
   if (atIndex === -1) {
     return inputUri;
   }
   
-  const credentials = inputUri.substring(0, atIndex + 1);
-  const hostAndRest = inputUri.substring(atIndex + 1);
+  const beforeAt = inputUri.substring(0, atIndex + 1);
+  const afterAt = inputUri.substring(atIndex + 1);
   
-  // Find where the host ends (first / or ? or end of string)
-  const slashIndex = hostAndRest.indexOf("/");
-  const questionIndex = hostAndRest.indexOf("?");
+  // Remove any :PORT pattern from the host portion
+  // Match :digits that are followed by /, ?, or end of string
+  const cleanedAfterAt = afterAt
+    .replace(/:(\d+)\//, "/")      // :port/ -> /
+    .replace(/:(\d+)\?/, "?")      // :port? -> ?
+    .replace(/:(\d+)$/, "");       // :port at end -> nothing
   
-  let hostEndIndex = hostAndRest.length;
-  if (slashIndex !== -1 && (questionIndex === -1 || slashIndex < questionIndex)) {
-    hostEndIndex = slashIndex;
-  } else if (questionIndex !== -1) {
-    hostEndIndex = questionIndex;
-  }
-  
-  const host = hostAndRest.substring(0, hostEndIndex);
-  const rest = hostAndRest.substring(hostEndIndex);
-  
-  // Remove port from host (pattern: hostname:port -> hostname)
-  const cleanedHost = host.replace(/:(\d+)$/, "");
-  
-  return credentials + cleanedHost + rest;
+  return beforeAt + cleanedAfterAt;
 }
 
 uri = cleanMongoSrvUri(uri);
+
+console.log("[v0] URI after cleaning (host only):", uri.includes("@") ? uri.substring(uri.lastIndexOf("@") + 1).split("/")[0].split("?")[0] : "no @ found");
 
 const options = {};
 
