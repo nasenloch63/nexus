@@ -7,16 +7,14 @@ if (!process.env.MONGODB_URI) {
 // Clean the URI - mongodb+srv URIs cannot have port numbers
 let uri = process.env.MONGODB_URI;
 
+console.log("[v0] Original MONGODB_URI (masked):", uri.replace(/\/\/[^@]+@/, "//****:****@"));
+
 // Remove any port number from mongodb+srv URIs
-if (uri.startsWith("mongodb+srv://") && uri.includes("@")) {
-  // Split into parts: before @ and after @
-  const atIndex = uri.indexOf("@");
-  const beforeAt = uri.substring(0, atIndex + 1);
-  const afterAt = uri.substring(atIndex + 1);
-  
-  // Remove port from the host portion (pattern: hostname:port -> hostname)
-  const cleanedAfterAt = afterAt.replace(/^([^/:]+):\d+([\/?]|$)/, "$1$2");
-  uri = beforeAt + cleanedAfterAt;
+if (uri.startsWith("mongodb+srv://")) {
+  // More aggressive port removal - matches :port anywhere after @ and before / or ?
+  // This handles all cases including when port is at the end
+  uri = uri.replace(/(@[^/:]+):(\d+)(?=[\/?\s]|$)/g, "$1");
+  console.log("[v0] Cleaned URI (masked):", uri.replace(/\/\/[^@]+@/, "//****:****@"));
 }
 
 const options = {};
