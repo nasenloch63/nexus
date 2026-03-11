@@ -6,22 +6,26 @@ export async function GET() {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
+
+    // Return user data without password
+    const { password: _, ...userWithoutPassword } = session.user;
 
     return NextResponse.json({
       user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        role: session.user.role,
-        avatar: session.user.avatar,
-        isActive: session.user.isActive,
-        createdAt: session.user.createdAt,
+        ...userWithoutPassword,
+        _id: session.user._id?.toString(),
       },
     });
   } catch (error) {
     console.error("Get user error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
