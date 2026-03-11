@@ -17,28 +17,21 @@ export async function POST(request: Request) {
     const result = await login(email, password);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 401 });
     }
 
-    // Set session cookie
     const cookieStore = await cookies();
     cookieStore.set("session", result.token!, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

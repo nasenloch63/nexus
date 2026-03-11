@@ -1,90 +1,87 @@
-import { ObjectId } from "mongodb";
-import { getDatabase, COLLECTIONS } from "../mongodb";
-import type { Profile, PaginatedResponse } from "./types";
+// Profiles helper - returns static in-memory stats
+// MongoDB removed. No external dependencies. v3
 
-export async function createProfile(
-  userId: string | ObjectId,
-  data: Omit<Profile, "_id" | "userId" | "createdAt" | "updatedAt">
-): Promise<Profile> {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
+export interface ProfileStats {
+  total: number;
+  active: number;
+  paused: number;
+  disconnected: number;
+  totalFollowers: number;
+  totalFollowing: number;
+  avgEngagement: number;
+  byPlatform: Record<string, number>;
+}
 
-  const profile: Profile = {
-    userId: typeof userId === "string" ? new ObjectId(userId) : userId,
-    ...data,
+// Static demo profile data used across the app
+export const DEMO_PROFILES = [
+  {
+    _id: "profile_1",
+    userId: "user_admin",
+    name: "NexusSync Official",
+    platform: "instagram" as const,
+    username: "nexussync_official",
+    avatar: "",
+    bio: "Official NexusSync account",
+    followers: 15234,
+    following: 892,
+    posts: 128,
+    engagement: 4.8,
+    status: "active" as const,
+    settings: {
+      autoReply: true,
+      autoReplyMessage: "Thanks for reaching out! We'll get back to you soon.",
+      notificationsEnabled: true,
+      language: "en",
+    },
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+  },
+  {
+    _id: "profile_2",
+    userId: "user_admin",
+    name: "Tech Updates",
+    platform: "twitter" as const,
+    username: "nexus_tech",
+    avatar: "",
+    bio: "Latest tech updates and news",
+    followers: 8921,
+    following: 456,
+    posts: 342,
+    engagement: 3.2,
+    status: "active" as const,
+    settings: {
+      autoReply: false,
+      notificationsEnabled: true,
+      language: "en",
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    _id: "profile_3",
+    userId: "user_admin",
+    name: "Business Network",
+    platform: "linkedin" as const,
+    username: "nexussync",
+    avatar: "",
+    bio: "Professional networking and insights",
+    followers: 5678,
+    following: 234,
+    posts: 89,
+    engagement: 5.1,
+    status: "active" as const,
+    settings: {
+      autoReply: false,
+      notificationsEnabled: true,
+      language: "en",
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 
-  const result = await collection.insertOne(profile);
-  return { ...profile, _id: result.insertedId };
-}
-
-export async function findProfileById(id: string | ObjectId): Promise<Profile | null> {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-  return collection.findOne({ _id: objectId });
-}
-
-export async function findProfilesByUserId(
-  userId: string | ObjectId,
-  page = 1,
-  pageSize = 10
-): Promise<PaginatedResponse<Profile>> {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
-  const objectId = typeof userId === "string" ? new ObjectId(userId) : userId;
-
-  const total = await collection.countDocuments({ userId: objectId });
-  const items = await collection
-    .find({ userId: objectId })
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
-    .toArray();
-
-  return {
-    items,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  };
-}
-
-export async function updateProfile(
-  id: string | ObjectId,
-  data: Partial<Omit<Profile, "_id" | "userId" | "createdAt">>
-): Promise<Profile | null> {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-
-  const result = await collection.findOneAndUpdate(
-    { _id: objectId },
-    { $set: { ...data, updatedAt: new Date() } },
-    { returnDocument: "after" }
-  );
-
-  return result;
-}
-
-export async function deleteProfile(id: string | ObjectId): Promise<boolean> {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-
-  const result = await collection.deleteOne({ _id: objectId });
-  return result.deletedCount > 0;
-}
-
-export async function getProfileStats(userId: string | ObjectId) {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
-  const objectId = typeof userId === "string" ? new ObjectId(userId) : userId;
-
-  const profiles = await collection.find({ userId: objectId }).toArray();
+export async function getProfileStats(_userId: string): Promise<ProfileStats> {
+  const profiles = DEMO_PROFILES;
 
   return {
     total: profiles.length,
@@ -105,10 +102,4 @@ export async function getProfileStats(userId: string | ObjectId) {
       {} as Record<string, number>
     ),
   };
-}
-
-export async function getAllProfiles(): Promise<Profile[]> {
-  const db = await getDatabase();
-  const collection = db.collection<Profile>(COLLECTIONS.PROFILES);
-  return collection.find({}).sort({ createdAt: -1 }).toArray();
 }
