@@ -7,10 +7,16 @@ const uri = "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo
 const options = {
   maxPoolSize: 10,
   minPoolSize: 2,
+  serverSelectionTimeoutMS: 15000,
+  socketTimeoutMS: 45000,
   // Add SSL options to handle certificate issues
-  ssl: true,
+  tls: true,
+  tlsAllowInvalidCertificates: false,
+  tlsAllowInvalidHostnames: false,
   retryWrites: true,
   retryReads: true,
+  // Connection pooling settings
+  waitQueueTimeoutMS: 10000,
 };
 
 let client: MongoClient;
