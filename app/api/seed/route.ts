@@ -1,10 +1,25 @@
 import { NextResponse } from "next/server";
-import { getDb, COLLECTIONS } from "@/lib/mongodb";
-import bcrypt from "bcryptjs";
 
 export async function GET() {
-  try {
-    const db = await getDb();
+  return NextResponse.json({
+    success: true,
+    message: "No seeding needed - using static in-memory data.",
+    accounts: [
+      {
+        email: "admin@nexussync.com",
+        password: "admin123456",
+        role: "admin",
+        name: "Yasin Adam Aissani",
+      },
+      {
+        email: "demo@nexussync.com",
+        password: "demo123456",
+        role: "user",
+        name: "Demo User",
+      },
+    ],
+  });
+}
 
     // Create indexes
     await db.collection(COLLECTIONS.USERS).createIndex({ email: 1 }, { unique: true });

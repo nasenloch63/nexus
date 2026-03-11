@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createUser } from "@/lib/db/users";
-import { createSession } from "@/lib/auth";
+import { STATIC_USERS, createToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -22,36 +21,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create user
-    const user = await createUser({ name, email, password });
-
-    // Create session
-    const token = await createSession(user);
-
-    // Set session cookie
-    const cookieStore = await cookies();
-    cookieStore.set("session", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Registration error:", error);
-    
-    if (error instanceof Error && error.message.includes("already exists")) {
+    // Check if user already exists
+    const existing = STATIC_USERS.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase()
+    );
+    if (existing) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 409 }
       );
     }
 
+    // For now, registration is disabled - use the pre-configured accounts
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        error:
+          "Registration is currently disabled. Please use admin@nexussync.com / admin123456 to login.",
+      },
+      { status: 403 }
     );
+  } catch (error) {
+    console.error("Registration error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
