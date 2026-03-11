@@ -1,7 +1,8 @@
 // Stub file - users are managed via static list in lib/auth.ts
-// MongoDB removed. TODO: Replace with real DB later.
+// MongoDB and bcryptjs removed. TODO: Replace with real DB later.
+// Cache bust: v2
 
-export async function updateLastLogin(_id: unknown): Promise<void> {
-  // no-op
+export async function updateLastLogin(_unused: unknown): Promise<void> {
+  // no-op - MongoDB removed
 }
 
