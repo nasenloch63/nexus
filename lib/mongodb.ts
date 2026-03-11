@@ -1,43 +1,14 @@
 import { MongoClient, Db } from "mongodb";
 
-if (!process.env.MONGODB_URI) {
+// MongoDB connection URI - use environment variable or fallback
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority";
+
+if (!MONGODB_URI) {
   throw new Error("Please add your MongoDB URI to .env.local");
 }
 
-// Clean the URI - mongodb+srv URIs cannot have port numbers
-let uri = process.env.MONGODB_URI;
-
-// Function to remove port from mongodb+srv URI - handles all cases
-function cleanMongoSrvUri(inputUri: string): string {
-  if (!inputUri.startsWith("mongodb+srv://")) {
-    return inputUri;
-  }
-  
-  // Use a global regex to remove ALL port patterns (:followed by digits)
-  // that appear after @ and before / or ? or end of string
-  // This handles: host:27017, host:27017/, host:27017?, host:27017/db?options
-  
-  const atIndex = inputUri.lastIndexOf("@");
-  if (atIndex === -1) {
-    return inputUri;
-  }
-  
-  const beforeAt = inputUri.substring(0, atIndex + 1);
-  const afterAt = inputUri.substring(atIndex + 1);
-  
-  // Remove any :PORT pattern from the host portion
-  // Match :digits that are followed by /, ?, or end of string
-  const cleanedAfterAt = afterAt
-    .replace(/:(\d+)\//, "/")      // :port/ -> /
-    .replace(/:(\d+)\?/, "?")      // :port? -> ?
-    .replace(/:(\d+)$/, "");       // :port at end -> nothing
-  
-  return beforeAt + cleanedAfterAt;
-}
-
-uri = cleanMongoSrvUri(uri);
-
-console.log("[v0] URI after cleaning (host only):", uri.includes("@") ? uri.substring(uri.lastIndexOf("@") + 1).split("/")[0].split("?")[0] : "no @ found");
+// Use the URI directly - the correct format should not have a port for mongodb+srv
+const uri = MONGODB_URI;
 
 const options = {};
 
