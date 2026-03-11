@@ -7,15 +7,42 @@ if (!process.env.MONGODB_URI) {
 // Clean the URI - mongodb+srv URIs cannot have port numbers
 let uri = process.env.MONGODB_URI;
 
-console.log("[v0] Original MONGODB_URI (masked):", uri.replace(/\/\/[^@]+@/, "//****:****@"));
-
-// Remove any port number from mongodb+srv URIs
-if (uri.startsWith("mongodb+srv://")) {
-  // More aggressive port removal - matches :port anywhere after @ and before / or ?
-  // This handles all cases including when port is at the end
-  uri = uri.replace(/(@[^/:]+):(\d+)(?=[\/?\s]|$)/g, "$1");
-  console.log("[v0] Cleaned URI (masked):", uri.replace(/\/\/[^@]+@/, "//****:****@"));
+// Function to remove port from mongodb+srv URI
+function cleanMongoSrvUri(inputUri: string): string {
+  if (!inputUri.startsWith("mongodb+srv://")) {
+    return inputUri;
+  }
+  
+  // Find the @ symbol that separates credentials from host
+  const atIndex = inputUri.lastIndexOf("@");
+  if (atIndex === -1) {
+    return inputUri;
+  }
+  
+  const credentials = inputUri.substring(0, atIndex + 1);
+  const hostAndRest = inputUri.substring(atIndex + 1);
+  
+  // Find where the host ends (first / or ? or end of string)
+  const slashIndex = hostAndRest.indexOf("/");
+  const questionIndex = hostAndRest.indexOf("?");
+  
+  let hostEndIndex = hostAndRest.length;
+  if (slashIndex !== -1 && (questionIndex === -1 || slashIndex < questionIndex)) {
+    hostEndIndex = slashIndex;
+  } else if (questionIndex !== -1) {
+    hostEndIndex = questionIndex;
+  }
+  
+  const host = hostAndRest.substring(0, hostEndIndex);
+  const rest = hostAndRest.substring(hostEndIndex);
+  
+  // Remove port from host (pattern: hostname:port -> hostname)
+  const cleanedHost = host.replace(/:(\d+)$/, "");
+  
+  return credentials + cleanedHost + rest;
 }
+
+uri = cleanMongoSrvUri(uri);
 
 const options = {};
 
