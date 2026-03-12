@@ -1,6 +1,7 @@
+// Neon PostgreSQL Database Client (v2.1)
 import { neon } from "@neondatabase/serverless";
 
-// Create a reusable SQL client
+// Create a reusable SQL client for Neon serverless PostgreSQL
 const sql = neon(process.env.DATABASE_URL!);
 
 export { sql };
