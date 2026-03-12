@@ -1,17 +1,21 @@
-import { MongoClient, Db } from "mongodb";
+import { MongoClient, Db, MongoClientOptions } from "mongodb";
 
-// MongoDB connection URI - use environment variable or fallback to hardcoded
-const uri = process.env.MONGODB_URI || "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority&appName=nasenloch63";
+// MongoDB connection URI with the correct format for MongoDB Atlas
+const uri = "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority&appName=nasenloch63";
 
-// MongoDB client options with SSL/TLS configuration
-const options = {
+// MongoDB client options with TLS configuration for Node.js compatibility
+const options: MongoClientOptions = {
   maxPoolSize: 10,
-  minPoolSize: 2,
-  // Add SSL options to handle certificate issues
-  ssl: true,
-  retryWrites: true,
-  retryReads: true,
+  serverSelectionTimeoutMS: 30000,
+  connectTimeoutMS: 30000,
+  // TLS settings for compatibility with different Node.js versions
+  tls: true,
+  tlsInsecure: false,
+  // Disable deprecated SSL options
+  directConnection: false,
 };
+
+console.log("[v0] MongoDB: Attempting to connect with URI (masked):", uri.replace(/\/\/[^@]+@/, "//****:****@"));
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
