@@ -1,4 +1,5 @@
-// Auth module - uses Neon PostgreSQL (v2.0)
+// Auth module (v4.0)
+// IMPORTANT: This project uses Neon PostgreSQL, NOT MongoDB
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { sql } from "./db";

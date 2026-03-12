@@ -1,3 +1,5 @@
+// Users module (v4.0)
+// IMPORTANT: This project uses Neon PostgreSQL, NOT MongoDB
 import bcrypt from "bcryptjs";
 import { sql } from "../db";
 import type { User, UserRole } from "./types";
