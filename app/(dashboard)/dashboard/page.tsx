@@ -10,7 +10,9 @@ export default async function DashboardPage() {
   
   let stats = null;
   try {
-    stats = await getProfileStats("static");
+    if (session?.user._id) {
+      stats = await getProfileStats(session.user._id);
+    }
   } catch {
     // Stats will be null if there's an error
   }
