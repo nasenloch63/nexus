@@ -10,8 +10,8 @@ export default async function DashboardPage() {
   
   let stats = null;
   try {
-    if (session?.user._id) {
-      stats = await getProfileStats(session.user._id);
+    if (session?.user.id) {
+      stats = await getProfileStats(session.user.id);
     }
   } catch {
     // Stats will be null if there's an error

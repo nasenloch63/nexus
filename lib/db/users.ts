@@ -1,6 +1,5 @@
-import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
-import { getDatabase, COLLECTIONS } from "../mongodb";
+import { sql } from "../db";
 import type { User, UserRole } from "./types";
 
 export async function createUser(data: {
@@ -9,43 +8,32 @@ export async function createUser(data: {
   name: string;
   role?: UserRole;
 }): Promise<User> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-
   // Check if user already exists
-  const existingUser = await collection.findOne({ email: data.email.toLowerCase() });
-  if (existingUser) {
+  const existing = await sql`SELECT id FROM users WHERE email = ${data.email.toLowerCase()}`;
+  if (existing.length > 0) {
     throw new Error("User with this email already exists");
   }
 
   // Hash password
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
-  const user: User = {
-    email: data.email.toLowerCase(),
-    password: hashedPassword,
-    name: data.name,
-    role: data.role || "user",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isActive: true,
-  };
+  const result = await sql`
+    INSERT INTO users (email, password, name, role)
+    VALUES (${data.email.toLowerCase()}, ${hashedPassword}, ${data.name}, ${data.role || "user"})
+    RETURNING *
+  `;
 
-  const result = await collection.insertOne(user);
-  return { ...user, _id: result.insertedId };
+  return result[0] as User;
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  return collection.findOne({ email: email.toLowerCase() });
+  const result = await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`;
+  return result.length > 0 ? (result[0] as User) : null;
 }
 
-export async function findUserById(id: string | ObjectId): Promise<User | null> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-  return collection.findOne({ _id: objectId });
+export async function findUserById(id: string): Promise<User | null> {
+  const result = await sql`SELECT * FROM users WHERE id = ${id}`;
+  return result.length > 0 ? (result[0] as User) : null;
 }
 
 export async function validatePassword(
@@ -56,62 +44,47 @@ export async function validatePassword(
 }
 
 export async function updateUser(
-  id: string | ObjectId,
-  data: Partial<Omit<User, "_id" | "password" | "createdAt">>
+  id: string,
+  data: Partial<Omit<User, "id" | "password" | "created_at">>
 ): Promise<User | null> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-
-  const result = await collection.findOneAndUpdate(
-    { _id: objectId },
-    { $set: { ...data, updatedAt: new Date() } },
-    { returnDocument: "after" }
-  );
-
-  return result;
+  const result = await sql`
+    UPDATE users
+    SET 
+      name = COALESCE(${data.name ?? null}, name),
+      role = COALESCE(${data.role ?? null}, role),
+      avatar = COALESCE(${data.avatar ?? null}, avatar),
+      is_active = COALESCE(${data.is_active ?? null}, is_active),
+      updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return result.length > 0 ? (result[0] as User) : null;
 }
 
-export async function updatePassword(
-  id: string | ObjectId,
-  newPassword: string
-): Promise<boolean> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-
+export async function updatePassword(id: string, newPassword: string): Promise<boolean> {
   const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-  const result = await collection.updateOne(
-    { _id: objectId },
-    { $set: { password: hashedPassword, updatedAt: new Date() } }
-  );
-
-  return result.modifiedCount > 0;
+  const result = await sql`
+    UPDATE users
+    SET password = ${hashedPassword}, updated_at = NOW()
+    WHERE id = ${id}
+  `;
+  return (result as unknown as { count: number }).count > 0;
 }
 
 export async function getAllUsers(): Promise<User[]> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  return collection.find({}).toArray();
+  const result = await sql`SELECT * FROM users ORDER BY created_at DESC`;
+  return result as User[];
 }
 
-export async function deleteUser(id: string | ObjectId): Promise<boolean> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-
-  const result = await collection.deleteOne({ _id: objectId });
-  return result.deletedCount > 0;
+export async function deleteUser(id: string): Promise<boolean> {
+  const result = await sql`DELETE FROM users WHERE id = ${id}`;
+  return (result as unknown as { count: number }).count > 0;
 }
 
-export async function updateLastLogin(id: string | ObjectId): Promise<void> {
-  const db = await getDatabase();
-  const collection = db.collection<User>(COLLECTIONS.USERS);
-  const objectId = typeof id === "string" ? new ObjectId(id) : id;
-
-  await collection.updateOne(
-    { _id: objectId },
-    { $set: { lastLoginAt: new Date() } }
-  );
+export async function updateLastLogin(id: string): Promise<void> {
+  try {
+    await sql`UPDATE users SET last_login_at = NOW() WHERE id = ${id}`;
+  } catch (error) {
+    console.error("Failed to update last login:", error);
+  }
 }

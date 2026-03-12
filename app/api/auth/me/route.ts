@@ -16,10 +16,7 @@ export async function GET() {
     const { password: _, ...userWithoutPassword } = session.user;
 
     return NextResponse.json({
-      user: {
-        ...userWithoutPassword,
-        _id: session.user._id?.toString(),
-      },
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error("Get user error:", error);

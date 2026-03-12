@@ -1,102 +1,31 @@
 import { NextResponse } from "next/server";
-import { getDb, COLLECTIONS } from "@/lib/mongodb";
+import { sql } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 export async function GET() {
   try {
-    const db = await getDb();
-
-    // Create indexes
-    await db.collection(COLLECTIONS.USERS).createIndex({ email: 1 }, { unique: true });
-    await db.collection(COLLECTIONS.PROFILES).createIndex({ userId: 1 });
-    await db.collection(COLLECTIONS.MESSAGES).createIndex({ profileId: 1 });
-    await db.collection(COLLECTIONS.SESSIONS).createIndex({ userId: 1 });
-    await db.collection(COLLECTIONS.SESSIONS).createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
     // Check if demo user exists
-    const existingUser = await db.collection(COLLECTIONS.USERS).findOne({
-      email: "demo@nexussync.com",
-    });
+    const existingUsers = await sql`SELECT id FROM users WHERE email = 'demo@nexussync.com'`;
 
-    if (!existingUser) {
+    if (existingUsers.length === 0) {
       // Create demo user
       const hashedPassword = await bcrypt.hash("demo123456", 12);
-      const userResult = await db.collection(COLLECTIONS.USERS).insertOne({
-        email: "demo@nexussync.com",
-        password: hashedPassword,
-        name: "Demo User",
-        role: "admin",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isActive: true,
-      });
+      const userResult = await sql`
+        INSERT INTO users (email, password, name, role)
+        VALUES ('demo@nexussync.com', ${hashedPassword}, 'Demo User', 'admin')
+        RETURNING id
+      `;
+
+      const userId = userResult[0].id as string;
 
       // Create demo profiles
-      const profiles = [
-        {
-          userId: userResult.insertedId,
-          name: "NexusSync Official",
-          platform: "instagram",
-          username: "nexussync_official",
-          avatar: "",
-          bio: "Official NexusSync account",
-          followers: 15234,
-          following: 892,
-          posts: 128,
-          engagement: 4.8,
-          status: "active",
-          settings: {
-            autoReply: true,
-            autoReplyMessage: "Thanks for reaching out! We'll get back to you soon.",
-            notificationsEnabled: true,
-            language: "en",
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          userId: userResult.insertedId,
-          name: "Tech Updates",
-          platform: "twitter",
-          username: "nexus_tech",
-          avatar: "",
-          bio: "Latest tech updates and news",
-          followers: 8921,
-          following: 456,
-          posts: 342,
-          engagement: 3.2,
-          status: "active",
-          settings: {
-            autoReply: false,
-            notificationsEnabled: true,
-            language: "en",
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          userId: userResult.insertedId,
-          name: "Business Network",
-          platform: "linkedin",
-          username: "nexussync",
-          avatar: "",
-          bio: "Professional networking and insights",
-          followers: 5678,
-          following: 234,
-          posts: 89,
-          engagement: 5.1,
-          status: "active",
-          settings: {
-            autoReply: false,
-            notificationsEnabled: true,
-            language: "en",
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-
-      await db.collection(COLLECTIONS.PROFILES).insertMany(profiles);
+      await sql`
+        INSERT INTO profiles (user_id, name, platform, username, bio, followers, following, posts, engagement, status, settings)
+        VALUES 
+          (${userId}, 'NexusSync Official', 'instagram', 'nexussync_official', 'Official NexusSync account', 15234, 892, 128, 4.8, 'active', '{"autoReply": true, "autoReplyMessage": "Thanks for reaching out!", "notificationsEnabled": true, "language": "en"}'),
+          (${userId}, 'Tech Updates', 'twitter', 'nexus_tech', 'Latest tech updates and news', 8921, 456, 342, 3.2, 'active', '{"autoReply": false, "notificationsEnabled": true, "language": "en"}'),
+          (${userId}, 'Business Network', 'linkedin', 'nexussync', 'Professional networking and insights', 5678, 234, 89, 5.1, 'active', '{"autoReply": false, "notificationsEnabled": true, "language": "en"}')
+      `;
 
       return NextResponse.json({
         success: true,
