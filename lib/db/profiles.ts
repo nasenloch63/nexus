@@ -1,3 +1,4 @@
+// Profiles module - uses Neon PostgreSQL (v3.0 - NO MONGODB)
 import { sql } from "../db";
 import type { Profile, PaginatedResponse, ProfileSettings } from "./types";
 

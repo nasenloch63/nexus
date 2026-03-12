@@ -1,3 +1,4 @@
+// Users module - uses Neon PostgreSQL (v3.0 - NO MONGODB)
 import bcrypt from "bcryptjs";
 import { sql } from "../db";
 import type { User, UserRole } from "./types";

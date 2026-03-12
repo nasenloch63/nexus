@@ -1,4 +1,4 @@
-// Neon PostgreSQL Database Client (v2.1)
+// Neon PostgreSQL Database Client (v3.0 - NO MONGODB)
 import { neon } from "@neondatabase/serverless";
 
 // Create a reusable SQL client for Neon serverless PostgreSQL
