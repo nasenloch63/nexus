@@ -14,8 +14,8 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
 
-    const profiles = await findProfilesByUserId(session.user._id!, page, pageSize);
-    const stats = await getProfileStats(session.user._id!);
+    const profiles = await findProfilesByUserId(session.user.id, page, pageSize);
+    const stats = await getProfileStats(session.user.id);
 
     return NextResponse.json({ ...profiles, stats });
   } catch (error) {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const profileData: Omit<Profile, "_id" | "userId" | "createdAt" | "updatedAt"> = {
+    const profileData: Omit<Profile, "id" | "user_id" | "created_at" | "updated_at"> = {
       name,
       platform,
       username,
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       },
     };
 
-    const profile = await createProfile(session.user._id!, profileData);
+    const profile = await createProfile(session.user.id, profileData);
 
     return NextResponse.json({ success: true, profile });
   } catch (error) {

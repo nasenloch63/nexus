@@ -20,7 +20,7 @@ export async function GET(
     }
 
     // Check ownership
-    if (profile.userId.toString() !== session.user._id?.toString()) {
+    if (profile.user_id !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -52,7 +52,7 @@ export async function PATCH(
     }
 
     // Check ownership
-    if (profile.userId.toString() !== session.user._id?.toString()) {
+    if (profile.user_id !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -87,7 +87,7 @@ export async function DELETE(
     }
 
     // Check ownership
-    if (profile.userId.toString() !== session.user._id?.toString()) {
+    if (profile.user_id !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

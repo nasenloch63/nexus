@@ -1,9 +1,9 @@
+// Auth module - uses Neon PostgreSQL (v2.0)
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { ObjectId } from "mongodb";
-import { getDatabase, COLLECTIONS } from "./mongodb";
+import { sql } from "./db";
 import { findUserById, findUserByEmail, validatePassword, updateLastLogin } from "./db/users";
-import type { User, Session } from "./db/types";
+import type { User } from "./db/types";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "your-secret-key-min-32-characters-long!"
@@ -19,25 +19,24 @@ export interface JWTPayload {
 }
 
 export async function createSession(user: User): Promise<string> {
-  const db = await getDatabase();
-  const sessionCollection = db.collection<Session>(COLLECTIONS.SESSIONS);
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + SESSION_DURATION);
 
   // Create session in database
-  const session: Session = {
-    userId: user._id!,
-    token: crypto.randomUUID(),
-    expiresAt: new Date(Date.now() + SESSION_DURATION),
-    createdAt: new Date(),
-  };
+  const result = await sql`
+    INSERT INTO sessions (user_id, token, expires_at)
+    VALUES (${user.id}, ${token}, ${expiresAt.toISOString()})
+    RETURNING id
+  `;
 
-  const result = await sessionCollection.insertOne(session);
+  const sessionId = result[0].id as string;
 
   // Create JWT token
-  const token = await new SignJWT({
-    userId: user._id!.toString(),
+  const jwtToken = await new SignJWT({
+    userId: user.id,
     email: user.email,
     role: user.role,
-    sessionId: result.insertedId.toString(),
+    sessionId: sessionId,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -45,9 +44,9 @@ export async function createSession(user: User): Promise<string> {
     .sign(JWT_SECRET);
 
   // Update last login
-  await updateLastLogin(user._id!);
+  await updateLastLogin(user.id);
 
-  return token;
+  return jwtToken;
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
@@ -73,28 +72,26 @@ export async function getSession(): Promise<{ user: User; payload: JWTPayload } 
       return null;
     }
 
-    // Verify session exists in database
-    const db = await getDatabase();
-    const sessionCollection = db.collection<Session>(COLLECTIONS.SESSIONS);
-    const session = await sessionCollection.findOne({
-      _id: new ObjectId(payload.sessionId),
-      expiresAt: { $gt: new Date() },
-    });
+    // Verify session exists in database and is not expired
+    const sessions = await sql`
+      SELECT * FROM sessions 
+      WHERE id = ${payload.sessionId} 
+      AND expires_at > NOW()
+    `;
 
-    if (!session) {
+    if (sessions.length === 0) {
       return null;
     }
 
     // Get user
     const user = await findUserById(payload.userId);
-    if (!user || !user.isActive) {
+    if (!user || !user.is_active) {
       return null;
     }
 
     return { user, payload };
   } catch (error) {
-    // Log the error but don't crash - treat as no session
-    console.error("[v0] Error getting session:", error);
+    console.error("Error getting session:", error);
     return null;
   }
 }
@@ -103,23 +100,28 @@ export async function login(
   email: string,
   password: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
-  const user = await findUserByEmail(email);
+  try {
+    const user = await findUserByEmail(email);
 
-  if (!user) {
-    return { success: false, error: "Invalid email or password" };
+    if (!user) {
+      return { success: false, error: "Invalid email or password" };
+    }
+
+    if (!user.is_active) {
+      return { success: false, error: "Account is deactivated" };
+    }
+
+    const isValidPassword = await validatePassword(password, user.password);
+    if (!isValidPassword) {
+      return { success: false, error: "Invalid email or password" };
+    }
+
+    const token = await createSession(user);
+    return { success: true, token };
+  } catch (error) {
+    console.error("Login error:", error);
+    return { success: false, error: "An error occurred during login" };
   }
-
-  if (!user.isActive) {
-    return { success: false, error: "Account is deactivated" };
-  }
-
-  const isValidPassword = await validatePassword(password, user.password);
-  if (!isValidPassword) {
-    return { success: false, error: "Invalid email or password" };
-  }
-
-  const token = await createSession(user);
-  return { success: true, token };
 }
 
 export async function logout(): Promise<void> {
@@ -129,9 +131,7 @@ export async function logout(): Promise<void> {
   if (token) {
     const payload = await verifyToken(token);
     if (payload?.sessionId) {
-      const db = await getDatabase();
-      const sessionCollection = db.collection<Session>(COLLECTIONS.SESSIONS);
-      await sessionCollection.deleteOne({ _id: new ObjectId(payload.sessionId) });
+      await sql`DELETE FROM sessions WHERE id = ${payload.sessionId}`;
     }
   }
 

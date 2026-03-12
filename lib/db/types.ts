@@ -1,42 +1,43 @@
-import { ObjectId } from "mongodb";
-
 // User roles
 export type UserRole = "admin" | "manager" | "user";
 
 // User interface
 export interface User {
-  _id?: ObjectId;
+  id: string;
   email: string;
   password: string;
   name: string;
   role: UserRole;
-  avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  lastLoginAt?: Date;
-  isActive: boolean;
+  avatar?: string | null;
+  is_active: boolean;
+  last_login_at?: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
-// Profile interface (managed profiles)
+// Profile interface (managed social media profiles)
+export type Platform = "instagram" | "twitter" | "linkedin" | "facebook" | "tiktok";
+export type ProfileStatus = "active" | "paused" | "disconnected";
+
 export interface Profile {
-  _id?: ObjectId;
-  userId: ObjectId;
+  id: string;
+  user_id: string;
   name: string;
-  platform: "instagram" | "twitter" | "linkedin" | "facebook" | "tiktok";
+  platform: Platform;
   username: string;
-  avatar?: string;
-  bio?: string;
+  avatar?: string | null;
+  bio?: string | null;
   followers: number;
   following: number;
   posts: number;
   engagement: number;
-  status: "active" | "paused" | "disconnected";
-  accessToken?: string;
-  refreshToken?: string;
-  tokenExpiresAt?: Date;
+  status: ProfileStatus;
+  access_token?: string | null;
+  refresh_token?: string | null;
+  token_expires_at?: Date | null;
   settings: ProfileSettings;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface ProfileSettings {
@@ -47,83 +48,83 @@ export interface ProfileSettings {
 }
 
 // Message interface
+export type MessageType = "text" | "image" | "video" | "audio" | "file";
+
 export interface Message {
-  _id?: ObjectId;
-  profileId: ObjectId;
-  conversationId: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar?: string;
+  id: string;
+  profile_id: string;
+  conversation_id: string;
+  sender_id: string;
+  sender_name: string;
+  sender_avatar?: string | null;
   content: string;
-  type: "text" | "image" | "video" | "audio" | "file";
-  isIncoming: boolean;
-  isRead: boolean;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
+  type: MessageType;
+  is_incoming: boolean;
+  is_read: boolean;
+  metadata?: Record<string, unknown> | null;
+  created_at: Date;
 }
 
 // Automation interface
-export interface Automation {
-  _id?: ObjectId;
-  profileId: ObjectId;
-  userId: ObjectId;
-  name: string;
-  description?: string;
-  trigger: AutomationTrigger;
-  actions: AutomationAction[];
-  isActive: boolean;
-  executionCount: number;
-  lastExecutedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type TriggerType = "keyword" | "time" | "event" | "webhook";
+export type ActionType = "send_message" | "like" | "follow" | "comment" | "webhook";
 
-export interface AutomationTrigger {
-  type: "keyword" | "time" | "event" | "webhook";
-  conditions: Record<string, unknown>;
+export interface Automation {
+  id: string;
+  profile_id: string;
+  user_id: string;
+  name: string;
+  description?: string | null;
+  trigger_type: TriggerType;
+  trigger_conditions: Record<string, unknown>;
+  actions: AutomationAction[];
+  is_active: boolean;
+  execution_count: number;
+  last_executed_at?: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface AutomationAction {
-  type: "send_message" | "like" | "follow" | "comment" | "webhook";
+  type: ActionType;
   config: Record<string, unknown>;
-  delay?: number; // delay in seconds
+  delay?: number;
 }
 
 // Analytics interface
 export interface Analytics {
-  _id?: ObjectId;
-  profileId: ObjectId;
+  id: string;
+  profile_id: string;
   date: Date;
-  metrics: {
-    impressions: number;
-    reach: number;
-    engagement: number;
-    followers: number;
-    following: number;
-    posts: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    saves: number;
-    clicks: number;
-    messages: number;
-  };
-  topPosts?: Array<{
+  impressions: number;
+  reach: number;
+  engagement: number;
+  followers: number;
+  following: number;
+  posts: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  clicks: number;
+  messages: number;
+  top_posts?: Array<{
     postId: string;
     engagement: number;
     impressions: number;
-  }>;
+  }> | null;
+  created_at: Date;
 }
 
 // Session interface (for auth)
 export interface Session {
-  _id?: ObjectId;
-  userId: ObjectId;
+  id: string;
+  user_id: string;
   token: string;
-  expiresAt: Date;
-  userAgent?: string;
-  ipAddress?: string;
-  createdAt: Date;
+  expires_at: Date;
+  user_agent?: string | null;
+  ip_address?: string | null;
+  created_at: Date;
 }
 
 // API Response types

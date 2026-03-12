@@ -173,7 +173,7 @@ export default function ProfilesPage() {
             const PlatformIcon = platformIcons[profile.platform] || Users;
 
             return (
-              <Card key={profile._id?.toString()} className="overflow-hidden">
+              <Card key={profile.id} className="overflow-hidden">
                 <div className={cn("h-2", platformColors[profile.platform])} />
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
