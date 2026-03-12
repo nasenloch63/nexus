@@ -1,7 +1,7 @@
 import { MongoClient, Db } from "mongodb";
 
-// MongoDB connection URI
-const uri = "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority";
+// MongoDB connection URI - use environment variable or fallback to hardcoded
+const uri = process.env.MONGODB_URI || "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority&appName=nasenloch63";
 
 // MongoDB client options with SSL/TLS configuration
 const options = {
