@@ -1,8 +1,9 @@
+// Auth module - uses Neon PostgreSQL (v2.0)
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { sql } from "./db";
 import { findUserById, findUserByEmail, validatePassword, updateLastLogin } from "./db/users";
-import type { User, Session } from "./db/types";
+import type { User } from "./db/types";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "your-secret-key-min-32-characters-long!"
