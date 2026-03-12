@@ -1,8 +1,13 @@
-// Neon PostgreSQL Database Client (v3.0 - NO MONGODB)
+// Neon PostgreSQL Database Client (v4.0)
+// IMPORTANT: This project uses Neon PostgreSQL, NOT MongoDB
 import { neon } from "@neondatabase/serverless";
 
 // Create a reusable SQL client for Neon serverless PostgreSQL
-const sql = neon(process.env.DATABASE_URL!);
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+const sql = neon(databaseUrl);
 
 export { sql };
 
