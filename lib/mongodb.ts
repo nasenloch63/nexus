@@ -1,16 +1,13 @@
 import { MongoClient, Db } from "mongodb";
 
-// MongoDB connection URI - use environment variable or fallback to hardcoded
-const uri = process.env.MONGODB_URI || "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority&appName=nasenloch63";
+// MongoDB connection URI with the correct format for MongoDB Atlas
+const uri = "mongodb+srv://yasinaissani_db_user:Nasaer300419!@nasenloch63.k5hwgo0.mongodb.net/nexussync?retryWrites=true&w=majority&appName=nasenloch63";
 
-// MongoDB client options with SSL/TLS configuration
+// MongoDB client options - minimal config for Atlas
 const options = {
   maxPoolSize: 10,
-  minPoolSize: 2,
-  // Add SSL options to handle certificate issues
-  ssl: true,
-  retryWrites: true,
-  retryReads: true,
+  serverSelectionTimeoutMS: 30000,
+  connectTimeoutMS: 30000,
 };
 
 let client: MongoClient;
