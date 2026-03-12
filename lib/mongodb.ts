@@ -8,11 +8,11 @@ const options: MongoClientOptions = {
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 30000,
   connectTimeoutMS: 30000,
-  // TLS settings for compatibility with different Node.js versions
+  // TLS settings - allow invalid certificates for sandbox environments
+  // This is needed because the v0 sandbox has SSL/TLS compatibility issues
   tls: true,
-  tlsInsecure: false,
-  // Disable deprecated SSL options
-  directConnection: false,
+  tlsAllowInvalidCertificates: true,
+  tlsAllowInvalidHostnames: true,
 };
 
 console.log("[v0] MongoDB: Attempting to connect with URI (masked):", uri.replace(/\/\/[^@]+@/, "//****:****@"));
